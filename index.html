@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #222831;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    h1 { margin-bottom: 20px; }
+    form[name="clc"] {
+      display: grid;
+      grid-template-columns: repeat(4, 90px);
+      grid-gap: 10px;
+      width: max-content;
+      background-color: #393e46;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    input[name="display"] {
+      grid-column: span 4;
+      height: 70px;
+      font-size: 2rem;
+      padding: 10px;
+      background-color: #4c555c;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      text-align: right;
+    }
+    .btn { height: 60px; font-size: 1.5rem; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.3s ease; color: rgb(23,2,2); }
+    .btn:hover { filter: brightness(1.2); }
+    .btn.operator { background-color: #cc5c11; }
+    .btn.minus { background-color: #ba55d3; }
+    .btn.multiply { background-color: #7db1b2; color: black; }
+    .btn.divide { background-color: #1f80c9; }
+    .btn.clear { background-color: #cc0000; }
+    .btn.del { background-color: #f39c12; color: black; }
+    .btn.equals { background-color: #27ae60; }
+    .btn.voice { background-color: #6c5ce7; color: white; }
+  </style>
+</head>
+<body>
+  <h1>Smart Calculator</h1>
+  <form name="clc" action="">
+    <input type="text" name="display" autocomplete="off" readonly />
+
+    <input class="btn" type="button" value="0" onclick="clc.display.value += '0'" />
+    <input class="btn" type="button" value="1" onclick="clc.display.value += '1'" />
+    <input class="btn" type="button" value="2" onclick="clc.display.value += '2'" />
+    <input class="btn operator" type="button" value="+" onclick="clc.display.value += '+'" />
+
+    <input class="btn" type="button" value="3" onclick="clc.display.value += '3'" />
+    <input class="btn" type="button" value="4" onclick="clc.display.value += '4'" />
+    <input class="btn" type="button" value="5" onclick="clc.display.value += '5'" />
+    <input class="btn minus" type="button" value="-" onclick="clc.display.value += '-'" />
+
+    <input class="btn" type="button" value="6" onclick="clc.display.value += '6'" />
+    <input class="btn" type="button" value="7" onclick="clc.display.value += '7'" />
+    <input class="btn" type="button" value="8" onclick="clc.display.value += '8'" />
+    <input class="btn multiply" type="button" value="*" onclick="clc.display.value += '*'" />
+
+    <input class="btn" type="button" value="9" onclick="clc.display.value += '9'" />
+    <input class="btn del" type="button" value="Del" onclick="clc.display.value = clc.display.value.slice(0, -1)" />
+    <input class="btn clear" type="button" value="C" onclick="clc.display.value = ''" />
+    <input class="btn divide" type="button" value="÷" onclick="clc.display.value += '/'" />
+
+    <input class="btn equals" type="button" value="=" onclick="clc.display.value = eval(clc.display.value)" style="grid-column: span 4;" />
+
+    <button type="button" class="btn voice" onclick="startListening()" style="grid-column: span 4;">🎤 Voice</button>
+  </form>
+
+  <audio id="listening-sound" src="https://www.soundjay.com/button/beep-07.mp3" preload="auto"></audio>
+
+  <script>
+    function speak(text) {
+      if ('speechSynthesis' in window) {
+        const msg = new SpeechSynthesisUtterance(text);
+        msg.lang = 'en-US';
+        window.speechSynthesis.speak(msg);
+      }
+    }
+
+    window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+
+    const sound = document.getElementById('listening-sound');
+
+    function startListening() {
+      const msg = new SpeechSynthesisUtterance("Listening");
+      msg.lang = 'en-US';
+      msg.onend = () => {
+        sound.play();
+        recognition.start();
+      };
+      window.speechSynthesis.speak(msg);
+    }
+
+    recognition.addEventListener('result', (event) => {
+      sound.pause();
+      sound.currentTime = 0;
+
+      let speech = event.results[0][0].transcript.toLowerCase();
+
+      // Convert spoken words to math symbols
+      speech = speech.replace(/plus/g, '+')
+                     .replace(/minus/g, '-')
+                     .replace(/times|multiply/g, '*')
+                     .replace(/divided by|divide/g, '/')
+                     .replace(/point/g, '.');
+
+      // Remove extra period at the end if exists
+      speech = speech.trim();
+      if (speech.endsWith('.')) {
+        speech = speech.slice(0, -1);
+      }
+
+      clc.display.value = speech;
+
+      try {
+        let result = eval(speech);
+        clc.display.value = result;
+        speak("The answer is " + result);
+      } catch {
+        speak("Sorry, I could not calculate that");
+      }
+    });
+  </script>
+</body>
+</html>
